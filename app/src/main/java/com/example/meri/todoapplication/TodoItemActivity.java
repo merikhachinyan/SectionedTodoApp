@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class TodoItemActivity extends AppCompatActivity
@@ -46,6 +47,7 @@ public class TodoItemActivity extends AppCompatActivity
 
     private ImageView mImageUpPriority;
     private ImageView mImageDownPriority;
+    private ImageView mBack;
 
     private CheckBox mCheckReminder;
     private CheckBox mCheckRepeat;
@@ -60,11 +62,12 @@ public class TodoItemActivity extends AppCompatActivity
     DatePickerDialog.OnDateSetListener date;
     TimePickerDialog.OnTimeSetListener time;
 
+    private int mod = 0;
     private int mPriorityNumber = 0;
 
     private String mTitle;
     private String mDescription;
-    private String mDate;
+    private Date mDate;
 
     private boolean isCheckedReminder;
     private boolean isCheckedRepeat;
@@ -84,6 +87,7 @@ public class TodoItemActivity extends AppCompatActivity
         mTextViewDate = findViewById(R.id.textViewDate);
         mTextPriorityNumber = findViewById(R.id.textPriorityNumber);
 
+        mBack = findViewById(R.id.back);
         mImageUpPriority = findViewById(R.id.textUpPriority);
         mImageDownPriority = findViewById(R.id.textDownPriority);
 
@@ -97,6 +101,7 @@ public class TodoItemActivity extends AppCompatActivity
 
         mButtonSave.setOnClickListener(this);
         mTextViewDate.setOnClickListener(this);
+        mBack.setOnClickListener(this);
         mImageUpPriority.setOnClickListener(this);
         mImageDownPriority.setOnClickListener(this);
         mCheckRepeat.setOnClickListener(this);
@@ -111,6 +116,15 @@ public class TodoItemActivity extends AppCompatActivity
                 mCalendar.set(Calendar.YEAR, year);
                 mCalendar.set(Calendar.MONTH, month);
                 mCalendar.set(Calendar.DAY_OF_MONTH, day);
+                setDate();
+            }
+        };
+
+        time = new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                mCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                mCalendar.set(Calendar.MINUTE, minute);
                 setDate();
             }
         };
@@ -149,7 +163,7 @@ public class TodoItemActivity extends AppCompatActivity
     public void onClick(View view){
         switch (view.getId()){
             case R.id.buttonSave:
-                if(MyView.isDisabledView(mEditTextTitle)){
+                if(mod == 1){
                     mButtonSave.setText(buttonTextSave);
                     enable();
                 } else {
@@ -165,15 +179,22 @@ public class TodoItemActivity extends AppCompatActivity
                         false).show();
                 break;
             case R.id.textUpPriority:
-                mPriorityNumber++;
+                if(mPriorityNumber < 5){
+                    mPriorityNumber++;
+                }
                 MyView.setViewNumber(mTextPriorityNumber, mPriorityNumber);
                 break;
             case R.id.textDownPriority:
-                mPriorityNumber--;
+                if(mPriorityNumber > 0){
+                    mPriorityNumber--;
+                }
                 MyView.setViewNumber(mTextPriorityNumber, mPriorityNumber);
                 break;
             case R.id.checkRepeat:
-                MyView.showOrHide(mCheckRepeat, mRadioGroup);
+                isCheckedRepeat = mCheckRepeat.isChecked();
+                showOrHide(isCheckedRepeat, mRadioGroup);
+                break;
+            case R.id.back:
                 break;
         }
     }
@@ -188,30 +209,45 @@ public class TodoItemActivity extends AppCompatActivity
     }
 
     private void saveData() {
-        if (MyView.isEditTextEmpty(mEditTextTitle)) {
+        mTitle = MyView.getEditTextValue(mEditTextTitle);
+        mDescription = MyView.getEditTextValue(mEditTextDescription);
+        mDate = mCalendar.getTime();
+
+        isCheckedReminder = MyView.getCheckBox(mCheckReminder);
+        isCheckedRepeat = MyView.getCheckBox(mCheckRepeat);
+
+        mCheckedRadioButtonId = MyView.getRadioButtonId(mRadioGroup);
+
+        if (isEmptyData(mTitle)) {
             Toast.makeText(this, titleText, Toast.
                     LENGTH_SHORT).show();
         } else {
-            if (MyView.countLines(mEditTextDescription) < 3) {
+            if (countLines(mDescription) < 3) {
                 Toast.makeText(this, descrText, Toast.
                         LENGTH_SHORT).show();
             } else {
-                if (MyView.isTextViewEmpty(mTextViewDate)) {
+                if (isEmptyDate(mDate)) {
                     Toast.makeText(this, dateText, Toast.
                             LENGTH_SHORT).show();
                 } else {
-                    mTitle = MyView.getEditTextValue(mEditTextTitle);
-                    mDescription = MyView.getEditTextValue(mEditTextDescription);
-                    mDate = MyView.getTextViewValue(mTextViewDate);
-
-                    isCheckedReminder = MyView.getCheckBox(mCheckReminder);
-                    isCheckedRepeat = MyView.getCheckBox(mCheckRepeat);
-
-                    mCheckedRadioButtonId = MyView.getRadioButtonId(mRadioGroup);
                     sendData();
                 }
             }
         }
+    }
+
+    private boolean isEmptyData(String text){
+        if(text.matches("")){
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isEmptyDate(Date date){
+        if(date == null){
+            return true;
+        }
+        return false;
     }
 
     private void sendData(){
@@ -221,7 +257,7 @@ public class TodoItemActivity extends AppCompatActivity
     private void newIntent(){
         Intent intent = new Intent();
 
-        TodoItem item = new TodoItem(mTitle, mDescription, mDate,
+        TodoItem item = new TodoItem(mTitle, mDescription, mCalendar.getTimeInMillis(),
                 isCheckedReminder, isCheckedRepeat, mCheckedRadioButtonId,
                 mPriorityNumber);
         intent.putExtra(TODO_ITEM, item);
@@ -244,6 +280,8 @@ public class TodoItemActivity extends AppCompatActivity
     }
 
     private void disable(){
+        mod = 1;
+
         MyView.disableView(mEditTextTitle);
         MyView.disableView(mEditTextDescription);
         MyView.disableView(mTextViewDate);
@@ -259,6 +297,8 @@ public class TodoItemActivity extends AppCompatActivity
     }
 
     private void enable(){
+        mod = 0;
+
         MyView.enableView(mEditTextTitle);
         MyView.enableView(mEditTextDescription);
         MyView.enableView(mTextViewDate);
@@ -284,7 +324,7 @@ public class TodoItemActivity extends AppCompatActivity
     private void getItemValues(TodoItem todoItem){
         mTitle = todoItem.getTitle();
         mDescription = todoItem.getDescription();
-        mDate = todoItem.getDate();
+        mCalendar.setTimeInMillis(todoItem.getDate());
         isCheckedReminder = todoItem.isCheckedReminder();
         isCheckedRepeat = todoItem.isCheckedRepeat();
         mCheckedRadioButtonId = todoItem.getCheckedRadioId();
@@ -294,7 +334,8 @@ public class TodoItemActivity extends AppCompatActivity
     private void setViewValues(){
         MyView.setEditTextValue(mEditTextTitle, mTitle);
         MyView.setEditTextValue(mEditTextDescription, mDescription);
-        MyView.setTextViewValue(mTextViewDate, mDate);
+
+        setDate();
 
         MyView.setCheckBox(mCheckReminder, isCheckedReminder);
         MyView.setCheckBox(mCheckRepeat, isCheckedRepeat);
@@ -302,6 +343,18 @@ public class TodoItemActivity extends AppCompatActivity
         MyView.setRadioGroup(mRadioGroup, mCheckedRadioButtonId);
         MyView.setViewNumber(mTextPriorityNumber, mPriorityNumber);
 
-        MyView.showOrHide(mCheckRepeat, mRadioGroup);
+        showOrHide(isCheckedRepeat, mRadioGroup);
+    }
+
+    void showOrHide(boolean isChecked, RadioGroup rGroup){
+        if(isChecked){
+            rGroup.setVisibility(View.VISIBLE);
+        } else {
+            rGroup.setVisibility(View.GONE);
+        }
+    }
+
+    int countLines(String text){
+        return text.split("\n").length;
     }
 }

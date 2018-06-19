@@ -4,71 +4,140 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
+import java.text.DateFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
-public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.ViewHolder> {
+public class TodoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private List<TodoItem> mTodoList;
+    private List<TodoItem> mTodoList = new ArrayList<>();
+    private List<Item> mItems = new ArrayList<>();
 
-    private recyclerViewItemClickListener mClickListener;
-    View itemView;
+    private RecyclerViewItemClickListener mItemClickListener;
+    private RemoveItemListener mRemoveItemListener;
 
-    TodoAdapter(List<TodoItem> todoList){
-        this.mTodoList = todoList;
-    }
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-    public class ViewHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
+        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
+        View view;
 
-        TextView title;
-        TextView description;
-        TextView date;
-
-        public ViewHolder(View view){
-            super(view);
-
-            title = view.findViewById(R.id.title);
-            description = view.findViewById(R.id.description);
-            date = view.findViewById(R.id.date);
-
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view){
-            mClickListener.onItemClick(view, getAdapterPosition());
+        switch (viewType) {
+            case Item.TODO_ITEM:
+                view = layoutInflater.inflate(R.layout.todo_item, parent, false);
+                return new TodoViewHolder(view);
+            case Item.MONTH_ITEM:
+                view = layoutInflater.inflate(R.layout.month_item, parent, false);
+                return new MonthViewHolder(view);
+            default:
+                throw new IllegalStateException("Unknown view type");
         }
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.todo_item, parent, false);
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
 
-        return new ViewHolder(itemView);
-    }
+        switch (holder.getItemViewType()){
+            case Item.TODO_ITEM: {
+                TodoViewHolder todoHolder = (TodoViewHolder) holder;
+                final TodoItem item = (TodoItem) mItems.get(position);
 
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        TodoItem item = mTodoList.get(position);
+                todoHolder.getTitle().setText(item.getTitle());
+                todoHolder.getDescription().setText(item.getDescription());
 
-        holder.title.setText(item.getTitle());
-        holder.description.setText(item.getDescription());
-        holder.date.setText(item.getDate());
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(item.getDate());
+
+                todoHolder.getDate().setText(dateFormat().format(calendar.getTime()));
+
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mItemClickListener.onItemClick(view, holder.getAdapterPosition());
+                    }
+                });
+
+                todoHolder.getDeleteItem().setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mRemoveItemListener.onRemove(holder.getAdapterPosition());
+                    }
+                });
+            }
+                break;
+            case Item.MONTH_ITEM:{
+                MonthViewHolder monthHolder = (MonthViewHolder) holder;
+                MonthItem item = (MonthItem) mItems.get(position);
+
+                String month = new DateFormatSymbols().getMonths()[item.getMonth()];
+                monthHolder.getMonth().setText(month);
+            }
+        }
     }
 
     @Override
     public int getItemCount() {
-        return mTodoList.size();
+        return mItems.size();
     }
 
-    public interface recyclerViewItemClickListener {
-        void onItemClick(View view, int position);
+    @Override
+    public int getItemViewType(int position) {
+        return mItems.get(position).getType();
     }
 
-    public void setClickListener(recyclerViewItemClickListener itemClickListener) {
-        this.mClickListener = itemClickListener;
+    private SimpleDateFormat dateFormat(){
+        String dateFormat = "dd MMM yyyy";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
+                dateFormat, Locale.US);
+
+        return simpleDateFormat;
+    }
+
+    public void addTodoItem(TodoItem todoItem){
+        mTodoList.add(todoItem);
+    }
+
+    public void removeTodoItem(TodoItem todoItem){
+        mTodoList.remove(todoItem);
+    }
+
+    public void addItems(Item item){
+        mItems.add(item);
+    }
+
+    public void setmItem(TodoItem todoItem, int position){
+        mItems.set(position, todoItem);
+    }
+
+    public List<TodoItem> getmTodoList() {
+        return mTodoList;
+    }
+
+    public List<Item> getmItems() {
+        return mItems;
+    }
+
+    public Item getmItem(int position){
+        return mItems.get(position);
+    }
+
+    public void removeItems(){
+        mItems.clear();
+    }
+
+    public void setClickListener(RecyclerViewItemClickListener itemClickListener) {
+        this.mItemClickListener = itemClickListener;
+    }
+
+    public interface RemoveItemListener{
+        void onRemove(int position);
+    }
+
+    public void setRemoveItemListener(RemoveItemListener removeItemListener){
+        mRemoveItemListener = removeItemListener;
     }
 }

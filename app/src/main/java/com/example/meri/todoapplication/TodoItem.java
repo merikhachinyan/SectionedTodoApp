@@ -1,12 +1,13 @@
 package com.example.meri.todoapplication;
 
 import java.io.Serializable;
+import java.util.Calendar;
 
-public class TodoItem implements Serializable{
+public class TodoItem implements Serializable, Item{
 
     private String title;
     private String description;
-    private String date;
+    private long date;
 
     private boolean isCheckedReminder;
     private boolean isCheckedRepeat;
@@ -14,7 +15,11 @@ public class TodoItem implements Serializable{
     private int checkedRadioId;
     private int priority;
 
-    public TodoItem(String title, String description, String date,
+    public TodoItem(){
+
+    }
+
+    public TodoItem(String title, String description, long date,
                     boolean isCheckedReminder, boolean isCheckedRepeat,
                     int checkedRadioId, int priority){
 
@@ -35,7 +40,7 @@ public class TodoItem implements Serializable{
         return description;
     }
 
-    public String getDate() {
+    public long getDate() {
         return date;
     }
 
@@ -53,5 +58,38 @@ public class TodoItem implements Serializable{
 
     public int getPriority() {
         return priority;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setDate(long date) {
+        this.date = date;
+    }
+
+    public void setCheckedReminder(boolean checkedReminder) {
+        isCheckedReminder = checkedReminder;
+    }
+
+    public void setCheckedRepeat(boolean checkedRepeat) {
+        isCheckedRepeat = checkedRepeat;
+    }
+
+    public void setCheckedRadioId(int checkedRadioId) {
+        this.checkedRadioId = checkedRadioId;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+    @Override
+    public int getType() {
+        return TODO_ITEM;
     }
 }

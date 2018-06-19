@@ -44,44 +44,6 @@ public class MyView {
         textView.setText(Integer.toString(number));
     }
 
-    private static boolean isCheckedCheckBox(CheckBox checkBox){
-        if(checkBox.isChecked()){
-            return true;
-        }
-        return false;
-    }
-
-    static void showOrHide(CheckBox checkBox, RadioGroup rGroup){
-        if(isCheckedCheckBox(checkBox)){
-            rGroup.setVisibility(View.VISIBLE);
-        } else {
-            rGroup.setVisibility(View.GONE);
-        }
-    }
-
-    static boolean isDisabledView(View view){
-        return !view.isEnabled();
-    }
-
-    static boolean isEditTextEmpty(EditText editText){
-        if(editText.getText().toString().matches("")){
-            return true;
-        }
-        return false;
-    }
-
-    static boolean isTextViewEmpty(TextView textView){
-        if(textView.getText().toString().matches("")){
-            return true;
-        }
-        return false;
-    }
-
-    static int countLines(EditText editText){
-        return (editText.getText().toString())
-                .split("\n").length;
-    }
-
     static void disableView(View view){
         view.setEnabled(false);
     }
